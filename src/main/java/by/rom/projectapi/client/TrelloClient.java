@@ -7,12 +7,11 @@ import by.rom.projectapi.model.dto.CardDto;
 import by.rom.projectapi.repository.BoardRepository;
 import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
-import org.json.JSONObject;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.core.ParameterizedTypeReference;
 import org.springframework.http.HttpMethod;
 import org.springframework.http.ResponseEntity;
+import org.springframework.scheduling.annotation.EnableScheduling;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Component;
 import org.springframework.web.client.RestClientException;
@@ -21,9 +20,11 @@ import org.springframework.web.util.UriComponentsBuilder;
 
 import java.net.URI;
 import java.util.List;
+import java.util.Objects;
 import java.util.stream.Collectors;
 
 @Component
+@EnableScheduling
 @Slf4j
 public class TrelloClient {
 
@@ -37,25 +38,65 @@ public class TrelloClient {
     private String trelloToken;
 
     private final RestTemplate restTemplate;
+    private final BoardConverter boardConverter;
+    private final BoardRepository boardRepository;
 
-    public TrelloClient(RestTemplate restTemplate) {
+    public TrelloClient(RestTemplate restTemplate, BoardConverter boardConverter, BoardRepository boardRepository) {
         this.restTemplate = restTemplate;
+        this.boardRepository = boardRepository;
+        this.boardConverter = boardConverter;
     }
 
-    public URI buildTrelloUrl() {
-        return UriComponentsBuilder.fromHttpUrl(trelloApiEndpoint + "/members/" + "trelloUsername" + "/boards")
+    @Scheduled(fixedRate = 60000)
+    public void getAllBoards(){
+        List<BoardDto> boardDtos = getList();
+
+        List<Board> boards = Objects.requireNonNull(boardDtos)
+                .stream()
+                .map(boardConverter::fromDto)
+                .collect(Collectors.toList());
+
+        boardRepository.saveAll(boards);
+    }
+
+    private List<BoardDto> getList(){
+
+        URI url = UriComponentsBuilder
+                .fromHttpUrl(trelloApiEndpoint + "/members/6261b0e401fed88aae2faeb9/boards")
+                .queryParam("key", trelloAppKey)
+                .queryParam("token",   trelloToken)
+                .build().encode().toUri();
+
+        ResponseEntity<List<BoardDto>> response =
+                restTemplate.exchange(url, HttpMethod.GET, null, new ParameterizedTypeReference<>() {});
+
+        return response.getBody();
+    }
+
+    public void deleteBoard(BoardDto board){
+        URI url = UriComponentsBuilder
+                .fromHttpUrl(trelloApiEndpoint + "/boards/" + board.getShortLink())
+                .queryParam("key", trelloAppKey)
+                .queryParam("token",   trelloToken)
+                .build().encode().toUri();
+
+        restTemplate.delete(url);
+    }
+
+    public void updateBoardName(BoardDto board){
+        URI url = UriComponentsBuilder
+                .fromHttpUrl(trelloApiEndpoint + "/boards/" + board.getIdBoard())
                 .queryParam("key", trelloAppKey)
                 .queryParam("token", trelloToken)
-                .queryParam("fields", "name,id")
-                .queryParam("lists", "all")
-                .build()
-                .encode()
-                .toUri();
+                .queryParam("name", board.getName())
+                .build().encode().toUri();
+
+        restTemplate.put(url, board);
     }
 
-
     @SneakyThrows
-        public void saveTrelloBoard(BoardDto boardDto){
+    public void saveTrelloBoard(BoardDto boardDto){
+
         URI url = UriComponentsBuilder
                 .fromHttpUrl(trelloApiEndpoint + "/boards/")
                 .queryParam("key", trelloAppKey)
@@ -64,8 +105,8 @@ public class TrelloClient {
                 .queryParam("defaultLists", false)
                 .build().encode().toUri();
 
-        boardDto.setDesc("my first description");
-//        boardDto.setIdOrganization("0123456789abcd0123456789");
+//        boardDto.setDesc("my first description");
+//        boardDto.setId("99999975fddb2d5f299f0daa");
 
         System.out.println(url);
         System.out.println(boardDto);
@@ -73,8 +114,6 @@ public class TrelloClient {
         try {
 //            restTemplate.postForLocation(url.toString(), boardDto);
             restTemplate.postForEntity(url, boardDto, BoardDto.class);
-//            restTemplate.postForLocation(url.toString(), jsonObject);
- //            restTemplate.put(url.toString(), boardDto);
         } catch (RestClientException e) {
             log.error(e.getMessage(), e);
         }

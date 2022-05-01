@@ -22,16 +22,17 @@ public class Board {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    @Column(unique = true, nullable = false)
+    @Column(nullable = false)
     private String name;
 
 //    @Column(nullable = false)
-//    private String shortLink;
+    private String shortLink;
 
     private String idBoard;
 
     private String description;
 
+    private String idMemberCreator;
 
     @Builder.Default
     private LocalDateTime createAt = LocalDateTime.now();

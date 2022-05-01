@@ -20,22 +20,26 @@ import java.time.LocalDateTime;
 @Data
 public class BoardDto {
 
-    @JsonProperty("id")
-    private String id;
+//    @JsonProperty("id")
+//    @JsonIgnore
+//    private String id;
 
 //    @NotNull
     @JsonProperty("name")
     private String name;
 
 //    @NotNull
-//    @JsonProperty("shortLink")
-//    private String shortLink;
+    @JsonProperty("shortLink")
+    private String shortLink;
 
     @JsonProperty("desc")
     private String desc;
 
-    @JsonProperty("desc")
+    @JsonProperty("id")
     private String idBoard;
+
+    @JsonProperty("idMemberCreator")
+    private String idMemberCreator;
 
     @NotNull
 //    @JsonProperty("created_at")

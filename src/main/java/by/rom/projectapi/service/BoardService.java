@@ -9,7 +9,6 @@ import by.rom.projectapi.model.dto.BoardDto;
 import by.rom.projectapi.repository.BoardRepository;
 import org.springframework.stereotype.Service;
 
-import java.nio.charset.StandardCharsets;
 import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Optional;
@@ -44,13 +43,12 @@ public class BoardService {
                         .description(desc)
 //                        .shortLink(name + "shortLink")
                         .idBoard(String.valueOf(Math.abs(new Random().nextInt())))
+                        .createAt(LocalDateTime.now())
                         .build()
         );
 
 //        Save board to Trello
-        BoardDto boardDto = boardConverter.toDto(board);
-        trelloClient.saveTrelloBoard(boardDto);
-//        trelloClient.getBoard();
+        trelloClient.saveTrelloBoard(boardConverter.toDto(board));
 //
 
         return boardConverter.toDto(board);
@@ -61,19 +59,23 @@ public class BoardService {
                 .orElseThrow(() -> new NotFoundException(String.format("Board with such id: %d , didn't found", id)));
 
         board.setName(name);
-
         boardRepository.save(board);
 
-        return boardConverter.toDto(board);
+        BoardDto boardDto = boardConverter.toDto(board);
+        trelloClient.updateBoardName(boardDto);
+
+        return boardDto;
     }
 
     public void deleteBoard(Long id) {
-        boardRepository.findById(id)
-                .ifPresentOrElse(
+        Optional<Board> boardById = boardRepository.findById(id);
+        boardById.ifPresentOrElse(
                 (board -> boardRepository.deleteById(id)),
                 ()-> {
                     throw new NotFoundException(String.format("Board with such id: %d , didn't found", id)); }
                 );
+
+        boardById.ifPresent(board -> trelloClient.deleteBoard(boardConverter.toDto(board)));
     }
 
     public List<BoardDto> getBoard(String name) {

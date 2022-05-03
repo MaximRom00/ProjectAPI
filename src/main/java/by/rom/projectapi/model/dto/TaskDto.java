@@ -16,7 +16,8 @@ import java.time.LocalDateTime;
 @Data
 public class TaskDto {
 
-    private Long id;
+    @JsonProperty("id")
+    private String idTask;
 
     @NotNull
     private String name;
@@ -28,4 +29,6 @@ public class TaskDto {
 
     @NotNull
     private String description;
+
+    private CardDto cardDto;
 }

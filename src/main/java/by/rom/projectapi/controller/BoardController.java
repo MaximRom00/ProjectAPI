@@ -1,9 +1,7 @@
 package by.rom.projectapi.controller;
 
-import by.rom.projectapi.client.TrelloClient;
 import by.rom.projectapi.model.dto.BoardDto;
 import by.rom.projectapi.service.BoardService;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -16,19 +14,12 @@ public class BoardController {
 
     private final BoardService boardService;
 
-    @Autowired
-    private TrelloClient trelloClient;
-
-
     public BoardController(BoardService boardService) {
         this.boardService = boardService;
     }
 
     @GetMapping
     public List<BoardDto> getBoard(@RequestParam (required = false) String name){
-
-//        trelloClient.buildTrelloUrl();
-
         return boardService.getBoard(name);
     }
 

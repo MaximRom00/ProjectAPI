@@ -4,8 +4,8 @@ import by.rom.projectapi.converter.BoardConverter;
 import by.rom.projectapi.model.Board;
 import by.rom.projectapi.model.dto.BoardDto;
 import by.rom.projectapi.model.dto.CardDto;
+import by.rom.projectapi.model.dto.TaskDto;
 import by.rom.projectapi.repository.BoardRepository;
-import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.core.ParameterizedTypeReference;
@@ -14,7 +14,6 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.scheduling.annotation.EnableScheduling;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Component;
-import org.springframework.web.client.RestClientException;
 import org.springframework.web.client.RestTemplate;
 import org.springframework.web.util.UriComponentsBuilder;
 
@@ -47,16 +46,17 @@ public class TrelloClient {
         this.boardConverter = boardConverter;
     }
 
-    @Scheduled(fixedRate = 60000)
+    @Scheduled(fixedRate = 90000)
     public void getAllBoards(){
         List<BoardDto> boardDtos = getList();
+        List<Board> list = boardRepository.findAll();
 
         List<Board> boards = Objects.requireNonNull(boardDtos)
                 .stream()
                 .map(boardConverter::fromDto)
                 .collect(Collectors.toList());
 
-        boardRepository.saveAll(boards);
+        boards.stream().filter(board -> !list.contains(board)).forEach(boardRepository::save);
     }
 
     private List<BoardDto> getList(){
@@ -94,7 +94,6 @@ public class TrelloClient {
         restTemplate.put(url, board);
     }
 
-    @SneakyThrows
     public void saveTrelloBoard(BoardDto boardDto){
 
         URI url = UriComponentsBuilder
@@ -105,73 +104,66 @@ public class TrelloClient {
                 .queryParam("defaultLists", false)
                 .build().encode().toUri();
 
-//        boardDto.setDesc("my first description");
-//        boardDto.setId("99999975fddb2d5f299f0daa");
+        restTemplate.postForEntity(url, boardDto, BoardDto.class);
 
-        System.out.println(url);
-        System.out.println(boardDto);
-
-        try {
-//            restTemplate.postForLocation(url.toString(), boardDto);
-            restTemplate.postForEntity(url, boardDto, BoardDto.class);
-        } catch (RestClientException e) {
-            log.error(e.getMessage(), e);
-        }
     }
 
+    public CardDto saveTrelloCard(CardDto cardDto){
 
-    public void saveTrelloCard(CardDto cardDto){
-        System.out.println(cardDto);
         URI url = UriComponentsBuilder
                 .fromHttpUrl(trelloApiEndpoint + "/lists/")
                 .queryParam("key", trelloAppKey)
                 .queryParam("token",   trelloToken)
-                .queryParam("idBoard", "626ad6f611f05554750a7d48")
+                .queryParam("idBoard", cardDto.getBoardDto().getIdBoard())
                 .queryParam("name", cardDto.getName())
                 .build().encode().toUri();
 
-        System.out.println(url);
-        System.out.println(cardDto);
-
-        restTemplate.postForEntity(url.toString(), cardDto, CardDto.class);
-
-
+        return restTemplate.postForEntity(url.toString(), cardDto, CardDto.class).getBody();
     }
 
-    @SneakyThrows
-    public void saveTask(BoardDto boardDto
-//            final TrelloBoardDto boardDto, final String newName
-    ){
+    public void updateCard(CardDto cardDto){
 
+        URI url = UriComponentsBuilder
+                .fromHttpUrl(trelloApiEndpoint + "/lists/" + cardDto.getIdList())
+                .queryParam("key", trelloAppKey)
+                .queryParam("token", trelloToken)
+                .queryParam("name", cardDto.getName())
+                .build().encode().toUri();
+
+        restTemplate.put(url, cardDto);
+    }
+
+    public TaskDto saveTask(TaskDto taskDto){
         URI url = UriComponentsBuilder
                 .fromHttpUrl(trelloApiEndpoint + "/cards/")
                 .queryParam("key", trelloAppKey)
-                .queryParam("idList", new Object())
                 .queryParam("token", trelloToken)
-                .queryParam("name", boardDto.getName())
+                .queryParam("idList", taskDto.getCardDto().getIdList())
+                .queryParam("name", taskDto.getName())
                 .build().encode().toUri();
 
-        System.out.println(url);
-
-        try {
-            restTemplate.postForEntity(url.toString(), boardDto, BoardDto.class);
-        } catch (RestClientException e) {
-            log.error(e.getMessage(), e);
-        }
+       return restTemplate.postForEntity(url.toString(), taskDto, TaskDto.class).getBody();
     }
 
-    public void getBoard() {
-//https://api.trello.com/1/boards/dBW7O6Hf?key=27adb151059841d76aa93b2bee1c6c44&token=5245fec2bc7b98a3ffe1d8cf168597550aa6210ac342a8244a2ccd2a68f9712f
+    public void deleteTask(TaskDto taskDto){
         URI url = UriComponentsBuilder
-                .fromHttpUrl(trelloApiEndpoint + "/boards/dBW7O6Hf")
+                .fromHttpUrl(trelloApiEndpoint + "/cards/" + taskDto.getIdTask())
                 .queryParam("key", trelloAppKey)
-                .queryParam("token", trelloToken)
+                .queryParam("token",   trelloToken)
                 .build().encode().toUri();
 
-        System.out.println();
-        BoardDto body = restTemplate.getForEntity(url, BoardDto.class).getBody();
-        System.out.println("BODY - " + body);
+        restTemplate.delete(url);
+    }
 
+    public void updateTask(TaskDto taskDto){
+        URI url = UriComponentsBuilder
+                .fromHttpUrl(trelloApiEndpoint + "/cards/" + taskDto.getIdTask())
+                .queryParam("key", trelloAppKey)
+                .queryParam("token", trelloToken)
+                .queryParam("name", taskDto.getName())
+                .queryParam("desc", taskDto.getDescription())
+                .build().encode().toUri();
 
+        restTemplate.put(url, taskDto);
     }
 }

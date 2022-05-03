@@ -6,14 +6,11 @@ import by.rom.projectapi.exception.BadRequestException;
 import by.rom.projectapi.exception.NotFoundException;
 import by.rom.projectapi.model.Board;
 import by.rom.projectapi.model.Card;
-import by.rom.projectapi.model.dto.BoardDto;
 import by.rom.projectapi.model.dto.CardDto;
 import by.rom.projectapi.repository.CardRepository;
 import org.springframework.stereotype.Service;
 
-import java.time.LocalDateTime;
 import java.util.List;
-import java.util.Random;
 import java.util.stream.Collectors;
 
 @Service
@@ -52,17 +49,17 @@ public class CardService {
                     throw new BadRequestException("Task with such name exists: " + name);
                 });
 
-        Card card = cardRepository.save(Card.builder()
+        CardDto cardDto = trelloClient.saveTrelloCard(cardConverter.toDto(Card.builder()
                 .name(name)
                 .board(board)
-                .idList(Math.abs(new Random().nextInt()))
-                .build());
+                .build()));
 
-        System.out.println(card);
-        CardDto cardDto = cardConverter.toDto(card);
-        trelloClient.saveTrelloCard(cardDto);
+        Card card = cardConverter.fromDto(cardDto);
+        card.setBoard(board);
 
-        return cardConverter.toDto(card);
+        cardRepository.save(card);
+
+        return cardDto;
     }
 
     public CardDto updateCard(Long id, String name) {
@@ -81,7 +78,11 @@ public class CardService {
 
         cardRepository.save(card);
 
-        return cardConverter.toDto(card);
+        CardDto cardDto = cardConverter.toDto(card);
+
+        trelloClient.updateCard(cardDto);
+
+        return cardDto;
     }
 
     public void deleteCard(Long id) {
@@ -91,5 +92,11 @@ public class CardService {
                         ()-> {
                             throw new NotFoundException(String.format("Card with such id: %d , didn't found", id)); }
                 );
+    }
+
+    public Card getCardById(Long id) {
+        return cardRepository.findById(id)
+                .orElseThrow(() -> new NotFoundException(String.format("Card with such id: %d , didn't found", id)));
+
     }
 }

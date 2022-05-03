@@ -37,20 +37,17 @@ public class BoardService {
                     throw new BadRequestException("Board exists with such name: " + name);
                 });
 
-        Board board = boardRepository.save(
+        Board board =
                 Board.builder()
                         .name(name)
                         .description(desc)
-//                        .shortLink(name + "shortLink")
                         .idBoard(String.valueOf(Math.abs(new Random().nextInt())))
                         .createAt(LocalDateTime.now())
-                        .build()
-        );
+                        .build();
 
 //        Save board to Trello
         trelloClient.saveTrelloBoard(boardConverter.toDto(board));
 //
-
         return boardConverter.toDto(board);
     }
 
@@ -80,8 +77,6 @@ public class BoardService {
 
     public List<BoardDto> getBoard(String name) {
 
-        System.out.println("name - " + name);
-        trelloClient.getBoard();
         if (name == null){
             return boardRepository.findAll()
                     .stream()

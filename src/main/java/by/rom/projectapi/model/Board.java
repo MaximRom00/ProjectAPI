@@ -6,7 +6,6 @@ import javax.persistence.*;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Random;
 
 @Entity
 @Table(name = "board")
@@ -15,7 +14,7 @@ import java.util.Random;
 @Builder
 @Data
 @ToString(exclude = "cards")
-
+@EqualsAndHashCode(of = {"name", "description"})
 public class Board {
 
     @Id
@@ -25,7 +24,6 @@ public class Board {
     @Column(nullable = false)
     private String name;
 
-//    @Column(nullable = false)
     private String shortLink;
 
     private String idBoard;

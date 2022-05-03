@@ -7,7 +7,6 @@ import javax.persistence.*;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Random;
 
 @Entity
 @Table(name = "card")
@@ -21,12 +20,10 @@ public class Card {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-
     private String name;
 
     @Column(nullable = false)
-//    @Builder.Default
-    private int idList;
+    private String idList;
 
     @Builder.Default
     private LocalDateTime createAt = LocalDateTime.now();

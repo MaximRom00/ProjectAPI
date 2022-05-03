@@ -44,7 +44,4 @@ public class CardController {
         cardService.deleteCard(id);
         return new ResponseEntity<>("Delete was successful", HttpStatus.OK);
     }
-
-
-
 }

@@ -18,7 +18,6 @@ public class ProjectApiApplication {
         ClientHttpRequestFactory httpRequestFactory = new HttpComponentsClientHttpRequestFactory(httpClient);
         return new RestTemplate(httpRequestFactory);
     }
-
     public static void main(String[] args) {
         SpringApplication.run(ProjectApiApplication.class, args);
     }

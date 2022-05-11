@@ -24,3 +24,7 @@ trello:
   app:
     key: 27adb151059841d76aa93b2bee1c6c44
     token: 5245fec2bc7b98a3ffe1d8cf168597550aa6210ac342a8244a2ccd2a68f9712f
+#    JWT
+jwt:
+  token:
+    secret: myjwtdemo

@@ -1,4 +1,13 @@
 # ProjectAPI
+# Technologies used
+### Stack
+- Java 11
+- Spring: SpringBoot, MVC, Data JPA, Security, Validation
+- Maven
+- Lombok
+- Mysql
+- JWT
+- Swagger2
 # REST APIs requests
 ```
 POST localhost:8081/api/project?name=new project&desc=this is my project

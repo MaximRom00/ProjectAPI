@@ -2,8 +2,6 @@ package by.rom.projectapi.controller;
 
 import by.rom.projectapi.config.jwt.JwtProvider;
 import by.rom.projectapi.exception.NotFoundException;
-import by.rom.projectapi.model.ERole;
-import by.rom.projectapi.model.Role;
 import by.rom.projectapi.model.User;
 import by.rom.projectapi.model.dto.AuthenticationRequestDto;
 import by.rom.projectapi.service.UserService;
@@ -35,13 +33,7 @@ public class AuthController {
                 .userName(authRequest.getLogin())
                 .password(authRequest.getPassword())
                 .build();
-        if (authRequest.getRole() != null){
-            user.setRole(Role.builder().name(authRequest.getRole()).build());
-        }
-        else {
-            user.setRole(Role.builder().name(ERole.ROLE_USER).build());
-        }
-        userService.saveUser(user);
+        userService.saveUser(user, authRequest.getRole());
         return new ResponseEntity<>(authRequest, HttpStatus.OK);
     }
 

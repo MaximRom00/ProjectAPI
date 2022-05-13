@@ -2,12 +2,13 @@ package by.rom.projectapi.service;
 
 import by.rom.projectapi.exception.NotFoundException;
 import by.rom.projectapi.model.ERole;
-import by.rom.projectapi.model.Role;
 import by.rom.projectapi.model.User;
 import by.rom.projectapi.repository.RoleRepository;
 import by.rom.projectapi.repository.UserRepository;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.stereotype.Service;
+
+import java.util.Objects;
 
 
 @Service
@@ -23,10 +24,10 @@ public class UserService {
         this.passwordEncoder = passwordEncoder;
     }
 
-    public User saveUser(User user){
-        Role role = roleRepository.findByName(ERole.ROLE_USER);
-        user.setRole(role);
+    public User saveUser(User user, ERole role){
+        user.setRole(roleRepository.findByName(Objects.requireNonNullElse(role, ERole.ROLE_USER)));
         user.setPassword(passwordEncoder.encode(user.getPassword()));
+        System.out.println("user - " + user);
         return userRepository.save(user);
     }
 

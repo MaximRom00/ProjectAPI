@@ -71,6 +71,7 @@ You can run the spring boot app by typing the following command -
 mvn spring-boot:run
 ```
 The server will start on port 8081.
+
 5. Defaults Roles
 The app uses role based authorization powered by spring security. You need to add the default roles in the database. Example
 ```
